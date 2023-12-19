@@ -1,0 +1,33 @@
+#AppFrameTopBar {
+  .Polaris-TopBar-Menu__Activator.Polaris-TopBar-Menu__Activator--userMenu {
+    background-color: white;
+    color: black;
+
+    &[aria-expanded="true"],
+    &:active {
+      background-color: rgba(0, 0, 0, 0.205);
+
+      p {
+        color: black;
+      }
+    }
+  }
+
+  .Polaris-TopBar {
+    background-color: white;
+  }
+
+  .Polaris-TopBar__NavigationIcon {
+    color: unset;
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.205);
+    }
+  }
+}
+
+.Polaris-Box {
+  .Polaris-Text--root.Polaris-Text--bodyMd {
+    max-width: calc(100% - 230px);
+  }
+}
