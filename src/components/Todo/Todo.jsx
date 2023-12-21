@@ -7,7 +7,6 @@ import {
   Button,
   ResourceList,
   ResourceItem,
-  EmptyState,
   FormLayout,
   TextField,
   InlineStack,
@@ -15,52 +14,42 @@ import {
   Badge,
   ButtonGroup,
 } from "@shopify/polaris";
+import AppEmptyState from "../EmptyState/AppEmptyState";
 
 function Todo() {
   const {
     data: todos,
     loading,
-    setLoading,
-    refetch,
     api,
   } = useFetchApi({ url: "/todos", presentDataFunc: (data) => data.data });
   const [selectedItems, setSelectedItems] = useState([]);
 
-  async function fetchTodos() {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    refetch();
-  }
-
   async function handleCreateTodo(value) {
     try {
-      setLoading(true);
-
+      closeModal();
       const resp = await api({
         url: "/todos",
         method: "POST",
         postData: { text: value },
       });
       if (resp.success) {
-        await fetchTodos();
         return true;
       }
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.log(error);
     }
   }
 
   async function handleCompleteTodos(ids, newValue) {
     try {
-      setLoading(true);
-
       const resp = await api({
         url: `/todos`,
         method: "PUT",
         postData: { ids: ids, data: { isCompleted: newValue } },
       });
+
       if (resp.success) {
-        await fetchTodos();
-        setSelectedItems([]);
+        ids.length !== 1 ? setSelectedItems([]) : null;
       }
     } catch (error) {
       console.log(error);
@@ -69,8 +58,6 @@ function Todo() {
 
   async function handleDeleteTodos(ids) {
     try {
-      setLoading(true);
-
       const resp = await api({
         url: `/todos`,
         method: "DELETE",
@@ -78,17 +65,36 @@ function Todo() {
       });
 
       if (resp.success) {
-        await fetchTodos();
-        setSelectedItems([]);
+        setSelectedItems((prev) => prev.filter((id) => !ids.includes(id)));
       }
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.log(error);
     }
   }
 
+  function primaryAction() {
+    setValue(() => "");
+    setError(() => "");
+    openModal();
+  }
+
+  // const disableCompleteAll = (() => {
+  //   let result = true;
+
+  //   selectedItems.forEach((id) => {
+  //     const currenTodo = todos.find((todo) => todo.id === id);
+  //     if (!currenTodo.isCompleted) {
+  //       result = false;
+  //       return;
+  //     }
+  //   });
+
+  //   return result;
+  // })();
   const promotedBulkActions = [
     {
       content: "Complete",
+      // disabled: disableCompleteAll,
       onAction: () => handleCompleteTodos(selectedItems, true),
     },
     {
@@ -97,28 +103,27 @@ function Todo() {
     },
   ];
 
-  const bulkActions = [];
   const resourceName = {
     singular: "todo",
     plural: "todos",
   };
 
   const handleSelected = (selected) => {
-    setSelectedItems(selected);
+    setSelectedItems(() => selected);
   };
 
   const [value, setValue] = useState("");
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChangeNewTodo = useCallback((value) => {
-    setValue(value);
-    setError(false);
+    setValue(() => value);
+    setError(() => "");
   }, []);
 
   async function confirmActionModal() {
     try {
       if (!value.trim()) {
-        setError("You must enter your todo!");
+        setError(() => "You must enter your todo!");
         return;
       }
       const success = await handleCreateTodo(value);
@@ -126,17 +131,16 @@ function Todo() {
       if (!success) {
         return false;
       }
-      setValue("");
-      setError(false);
+      setValue(() => "");
+      setError(() => "");
       return true;
     } catch (error) {
       console.log(error);
     }
   }
 
-  const { modal, openModal } = useConfirmModal({
+  const { modal, openModal, closeModal } = useConfirmModal({
     confirmAction: confirmActionModal,
-    cancelAction: () => {},
     title: "Create new todo",
     content: (
       <FormLayout>
@@ -151,35 +155,16 @@ function Todo() {
         />
       </FormLayout>
     ),
-    buttonTitle: "Create",
-    closeTitle: "Cancel",
-    loading: loading,
-    disabled: false,
-    destructive: false,
-    closeCallback: () => {},
-    canCloseAfterFinished: true,
-    successCallback: () => {},
-    sectioned: true,
-    large: false,
-    isConfirmButton: true,
-    disabledSecondBtn: false,
-    loadingSecondBtn: false,
-    titleHidden: false,
-    secondaryActions: [
-      {
-        content: "Custom Cancel",
-        loading: false,
-        onAction: () => {},
-        disabled: false,
-      },
-    ],
+    closeCallback: () => {
+      setError(() => "");
+    },
   });
 
   return (
     <Page
       title="Todoes"
       primaryAction={
-        <Button variant="primary" onClick={() => openModal(1)}>
+        <Button variant="primary" onClick={primaryAction}>
           Create todo
         </Button>
       }
@@ -193,18 +178,12 @@ function Todo() {
           selectedItems={selectedItems}
           onSelectionChange={handleSelected}
           promotedBulkActions={promotedBulkActions}
-          bulkActions={bulkActions}
+          bulkActions={[]}
           loading={loading}
-          emptyState={
-            <EmptyState
-              heading="Relax..."
-              image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
-            >
-              <p>You have nothing to do!</p>
-            </EmptyState>
-          }
+          emptyState={<AppEmptyState />}
           renderItem={(item) => (
             <ResourceItem
+              key={item.id + item.isCompleted}
               id={item.id}
               text={item.text}
               isCompleted={item.isCompleted}

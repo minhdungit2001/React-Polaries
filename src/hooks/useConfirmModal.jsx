@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
 import { Modal } from "@shopify/polaris";
-// import { useI18n } from '@shopify/react-i18n';
 
 /**
  *
@@ -30,8 +29,8 @@ export default function useConfirmModal({
   cancelAction,
   title,
   content,
-  buttonTitle,
-  closeTitle,
+  buttonTitle = "Confirm",
+  closeTitle = "Cancel",
   loading = false,
   disabled = false,
   destructive = false,
@@ -42,11 +41,10 @@ export default function useConfirmModal({
   large = false,
   isConfirmButton = true,
   disabledSecondBtn = false,
-  loadingSecondBtn = loading,
+  loadingSecondBtn = false,
   titleHidden = false,
   secondaryActions = [],
 }) {
-  // const [i18n] = useI18n();
   const [open, setOpen] = useState(false);
   const input = useRef(null);
 
@@ -78,11 +76,9 @@ export default function useConfirmModal({
       sectioned={sectioned}
       open={open}
       onClose={() => handleClose()}
-      // title={title || i18n.translate('UseModal.defaultConfirm')}
       title={title}
       primaryAction={
         isConfirmButton && {
-          // content: buttonTitle || i18n.translate('UseModal.Button.confirm'),
           content: buttonTitle,
           loading,
           disabled,
@@ -94,7 +90,6 @@ export default function useConfirmModal({
         closeTitle !== ""
           ? [
               {
-                // content: closeTitle || i18n.translate('UseModal.Button.cancel'),
                 content: closeTitle,
                 loading: loadingSecondBtn,
                 onAction: () => cancelAction?.() || handleClose(),
@@ -104,7 +99,6 @@ export default function useConfirmModal({
           : secondaryActions
       }
     >
-      {/* {content || i18n.translate('UseModal.defaultConfirm')} */}
       {content}
     </Modal>
   );

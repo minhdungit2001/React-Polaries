@@ -32,16 +32,16 @@ export default function useFetchApi({
         const newData = presentDataFunc
           ? presentDataFunc(resp.data)
           : resp.data;
-        setData(newData);
+        setData(() => newData);
       }
       if (resp.pagination) {
-        setPagination(resp.pagination);
+        setPagination(() => resp.pagination);
       }
       if (resp.errors) {
-        setErrors([...errors, resp.errors]);
+        setErrors((prev) => [...prev, resp.errors]);
       }
     } catch (error) {
-      setErrors([...errors, error.message]);
+      setErrors((prev) => [...prev, error.message]);
       console.log(error);
     } finally {
       setLoading(false);
@@ -53,24 +53,28 @@ export default function useFetchApi({
     url = "",
     method = "GET",
     postData = {},
-    presentDataFunc = null,
+    isRefresh = true,
   }) {
     if (url === "") {
       return;
     }
+
     try {
+      setLoading(true);
       const resp = await axiosInstance({
         url: url,
         data: postData,
         method: method,
       });
 
-      if (presentDataFunc) {
-        return presentDataFunc(resp.data);
+      if (isRefresh) {
+        await fetchApi();
       }
       return resp.data;
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -89,7 +93,6 @@ export default function useFetchApi({
     setPagination,
     fetched,
     setFetched,
-    refetch: fetchApi,
     errors,
     setErrors,
     api,
